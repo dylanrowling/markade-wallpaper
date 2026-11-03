@@ -1,0 +1,31 @@
+name: MarkadeWallpaper
+options:
+  bundleIdPrefix: com.trademarkade
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+targets:
+  MarkadeWallpaper:
+    type: application
+    platform: macOS
+    sources:
+      - MarkadeWallpaper
+    info:
+      path: MarkadeWallpaper/Info.plist
+      properties:
+        CFBundleDisplayName: Markade Wallpaper
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSUIElement: true
+        NSPrincipalClass: NSApplication
+    settings:
+      base:
+        PRODUCT_NAME: Markade Wallpaper
+        PRODUCT_BUNDLE_IDENTIFIER: com.trademarkade.markade.wallpaper
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "-"
