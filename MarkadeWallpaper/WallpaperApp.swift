@@ -21,8 +21,14 @@ final class WallpaperApp: NSObject, NSApplicationDelegate {
         buildDisplays()
         buildMenu()
 
-        clickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { _ in
-            NetTaps.emit(NSEvent.mouseLocation)
+        // A left press is held: the cloth stays bunched under the pointer and follows a drag until it lifts.
+        clickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .leftMouseDragged, .leftMouseUp]) { e in
+            switch e.type {
+            case .leftMouseDown: NetTaps.emit(NSEvent.mouseLocation, hold: true)
+            case .leftMouseDragged: NetTaps.drag(NSEvent.mouseLocation)
+            case .leftMouseUp: NetTaps.release()
+            default: NetTaps.emit(NSEvent.mouseLocation)
+            }
         }
 
         let center = NotificationCenter.default

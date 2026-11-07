@@ -88,7 +88,7 @@ final class NetRenderer: NSObject, MTKViewDelegate {
               let cmd = queue.makeCommandBuffer(),
               let enc = cmd.makeRenderCommandEncoder(descriptor: pass) else { return }
         let r = NetTaps.read(origin: origin)
-        let fps = r.contains { $0.z >= 0 } ? 30 : 15
+        let fps = NetTaps.isHeld ? 60 : (r.contains { $0.z >= 0 } ? 30 : 15)
         if view.preferredFramesPerSecond != fps { view.preferredFramesPerSecond = fps }
         var u = Uniforms(res: SIMD2(Float(want.width), Float(want.height)),
                          px: Float(want.width / pts.width),
@@ -108,16 +108,32 @@ enum NetTaps {
     static let max = 5
     static let life: CFTimeInterval = 2.4
 
+    /// A held press stops at this age, seconds: when the cloth at the pointer is the
+    /// most bunched it gets. It stays there under the pointer through a drag and sets
+    /// off outward only when let go.
+    static let holdAge: CFTimeInterval = 0.1
+
     nonisolated(unsafe) private static var taps: [(point: CGPoint, start: CFTimeInterval)?] = Array(repeating: nil, count: max)
     nonisolated(unsafe) private static var next = 0
+    nonisolated(unsafe) private static var held: Int?
 
-    static func emit(_ point: CGPoint) {
+    static var isHeld: Bool { held != nil }
+
+    static func emit(_ point: CGPoint, hold: Bool = false) {
         taps[next] = (point, CACurrentMediaTime())
+        held = hold ? next : held
         next = (next + 1) % max
     }
 
+    static func drag(_ point: CGPoint) {
+        if let h = held, taps[h] != nil { taps[h]!.point = point }
+    }
+
+    static func release() { held = nil }
+
     static func read(origin: CGPoint) -> [SIMD4<Float>] {
         let now = CACurrentMediaTime()
+        if let h = held, let t = taps[h] { taps[h]!.start = Swift.max(t.start, now - holdAge) }
         return (0..<max).map { i in
             guard let t = taps[i] else { return SIMD4(0, 0, -1, 0) }
             let age = now - t.start
